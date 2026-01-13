@@ -1,4 +1,4 @@
-# luncurkan.dev Templates
+# luncurkan.dev templates
 
 Ready-to-deploy project templates for [luncurkan.dev](https://luncurkan.dev) deployment platform.
 
