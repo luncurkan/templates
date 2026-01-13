@@ -1,10 +1,11 @@
 use axum::{
     Json, Router,
     extract::{Path, State},
-    http::StatusCode,
+    http::{header, HeaderMap, StatusCode},
     response::{Html, IntoResponse, Redirect, Response},
     routing::get,
 };
+use tower_http::trace::TraceLayer;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool, postgres::PgPoolOptions};
@@ -19,7 +20,6 @@ use uuid::Uuid;
 #[derive(Clone)]
 struct AppState {
     db: PgPool,
-    base_url: String,
 }
 
 // ============================================================================
@@ -317,10 +317,12 @@ async fn index() -> Html<&'static str> {
 
 async fn create_short_url(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Json(payload): Json<CreateUrlRequest>,
 ) -> Result<Json<CreateUrlResponse>, AppError> {
     // Validate URL
     if !is_valid_url(&payload.url) {
+        tracing::warn!(url = %payload.url, "Invalid URL provided");
         return Err(AppError::InvalidUrl);
     }
 
@@ -343,7 +345,14 @@ async fn create_short_url(
     .fetch_one(&state.db)
     .await?;
 
-    let short_url = format!("{}/{}", state.base_url, record.short_code);
+    let base_url = get_base_url(&headers);
+    let short_url = format!("{}/{}", base_url, record.short_code);
+
+    tracing::info!(
+        short_code = %record.short_code,
+        original_url = %record.original_url,
+        "URL shortened"
+    );
 
     Ok(Json(CreateUrlResponse {
         id: record.id,
@@ -370,13 +379,27 @@ async fn redirect_to_url(
     .fetch_optional(&state.db)
     .await?;
 
-    let record = record.ok_or(AppError::NotFound)?;
+    let record = match record {
+        Some(r) => r,
+        None => {
+            tracing::warn!(short_code = %code, "Short URL not found");
+            return Err(AppError::NotFound);
+        }
+    };
+
+    tracing::info!(
+        short_code = %record.short_code,
+        target = %record.original_url,
+        clicks = record.clicks,
+        "Redirecting"
+    );
 
     Ok(Redirect::temporary(&record.original_url))
 }
 
 async fn get_url_stats(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
     Path(code): Path<String>,
 ) -> Result<Json<UrlStatsResponse>, AppError> {
     let record: Option<Url> = sqlx::query_as(
@@ -391,7 +414,8 @@ async fn get_url_stats(
     .await?;
 
     let record = record.ok_or(AppError::NotFound)?;
-    let short_url = format!("{}/{}", state.base_url, record.short_code);
+    let base_url = get_base_url(&headers);
+    let short_url = format!("{}/{}", base_url, record.short_code);
 
     Ok(Json(UrlStatsResponse {
         id: record.id,
@@ -405,6 +429,7 @@ async fn get_url_stats(
 
 async fn list_urls(
     State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
 ) -> Result<Json<Vec<UrlStatsResponse>>, AppError> {
     let records: Vec<Url> = sqlx::query_as(
         r#"
@@ -417,12 +442,13 @@ async fn list_urls(
     .fetch_all(&state.db)
     .await?;
 
+    let base_url = get_base_url(&headers);
     let urls: Vec<UrlStatsResponse> = records
         .into_iter()
         .map(|r| UrlStatsResponse {
             id: r.id,
             short_code: r.short_code.clone(),
-            short_url: format!("{}/{}", state.base_url, r.short_code),
+            short_url: format!("{}/{}", base_url, r.short_code),
             original_url: r.original_url,
             clicks: r.clicks,
             created_at: r.created_at,
@@ -447,8 +473,11 @@ async fn delete_url(
     .await?;
 
     if result.rows_affected() == 0 {
+        tracing::warn!(short_code = %code, "URL not found for deletion");
         return Err(AppError::NotFound);
     }
+
+    tracing::info!(short_code = %code, "URL deleted");
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -465,6 +494,15 @@ fn generate_short_code() -> String {
 
 fn is_valid_url(url: &str) -> bool {
     url.starts_with("http://") || url.starts_with("https://")
+}
+
+fn get_base_url(headers: &HeaderMap) -> String {
+    let host = headers
+        .get(header::HOST)
+        .and_then(|h| h.to_str().ok())
+        .unwrap_or("localhost:3000");
+
+    format!("http://{}", host)
 }
 
 // ============================================================================
@@ -491,8 +529,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or_else(|_| "5".to_string())
         .parse()
         .expect("DATABASE_MAX_CONNECTIONS must be a number");
-    let base_url =
-        std::env::var("BASE_URL").unwrap_or_else(|_| format!("http://{}:{}", host, port));
 
     // Create database connection pool
     tracing::info!("Connecting to database...");
@@ -506,7 +542,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     sqlx::migrate!("./migrations").run(&pool).await?;
 
     // Create application state
-    let state = Arc::new(AppState { db: pool, base_url });
+    let state = Arc::new(AppState { db: pool });
 
     // Build router
     let app = Router::new()
@@ -515,6 +551,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/urls", get(list_urls).post(create_short_url))
         .route("/api/urls/{code}", get(get_url_stats).delete(delete_url))
         .route("/{code}", get(redirect_to_url))
+        .layer(TraceLayer::new_for_http())
         .with_state(state);
 
     // Start server
