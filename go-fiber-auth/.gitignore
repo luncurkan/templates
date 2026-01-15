@@ -1,0 +1,4 @@
+go-fiber-auth
+*.exe
+*.db
+.env

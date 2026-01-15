@@ -1,0 +1,14 @@
+{
+  "name": "bun-elysia-websocket",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "elysia": "^1.2.10"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  }
+}
