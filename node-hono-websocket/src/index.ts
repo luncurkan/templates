@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { serve } from "@hono/node-server";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { createNodeWebSocket } from "@hono/node-ws";
@@ -180,13 +181,7 @@ app.get("/ws", wsHandler);
 app.get("/ws/:room", wsHandler);
 
 // Start server
-const server = Bun?.serve
-  ? Bun.serve({ fetch: app.fetch, hostname: HOST, port: PORT })
-  : (() => {
-      const { serve } = require("@hono/node-server");
-      const server = serve({ fetch: app.fetch, hostname: HOST, port: PORT });
-      injectWebSocket(server);
-      return server;
-    })();
+const server = serve({ fetch: app.fetch, hostname: HOST, port: PORT });
+injectWebSocket(server);
 
 console.log(`Server running on http://${HOST}:${PORT}`);
