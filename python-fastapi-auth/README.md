@@ -33,7 +33,7 @@ uvicorn app.main:app --reload
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `HOST` | Server host | `0.0.0.0` |
-| `PORT` | Server port | `8000` |
+| `PORT` | Server port | `3000` |
 | `DATABASE_URL` | SQLAlchemy database URL | `sqlite+aiosqlite:///./data.db` |
 | `JWT_SECRET` | Secret key for JWT signing | (required) |
 | `JWT_ALGORITHM` | JWT algorithm | `HS256` |
@@ -55,7 +55,7 @@ uvicorn app.main:app --reload
 ### Register
 
 ```bash
-curl -X POST http://localhost:8000/api/auth/register \
+curl -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "password123"}'
 ```
@@ -63,7 +63,7 @@ curl -X POST http://localhost:8000/api/auth/register \
 ### Login
 
 ```bash
-curl -X POST http://localhost:8000/api/auth/login \
+curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "password123"}'
 ```
@@ -81,22 +81,22 @@ Response:
 ### Protected Route
 
 ```bash
-curl http://localhost:8000/api/auth/me \
+curl http://localhost:3000/api/auth/me \
   -H "Authorization: Bearer eyJhbGc..."
 ```
 
 ### Refresh Token
 
 ```bash
-curl -X POST http://localhost:8000/api/auth/refresh \
+curl -X POST http://localhost:3000/api/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{"refresh_token": "eyJhbGc..."}'
 ```
 
 ## Interactive Docs
 
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- Swagger UI: http://localhost:3000/docs
+- ReDoc: http://localhost:3000/redoc
 
 ## Docker
 
@@ -106,7 +106,7 @@ docker-compose up --build
 
 # Or build manually
 docker build -t python-fastapi-auth .
-docker run -p 8000:8000 -e JWT_SECRET=your-secret python-fastapi-auth
+docker run -p 3000:3000 -e JWT_SECRET=your-secret python-fastapi-auth
 ```
 
 ## License

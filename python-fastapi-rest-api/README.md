@@ -32,7 +32,7 @@ uvicorn app.main:app --reload
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `HOST` | Server host | `0.0.0.0` |
-| `PORT` | Server port | `8000` |
+| `PORT` | Server port | `3000` |
 | `DATABASE_URL` | SQLAlchemy database URL | `sqlite+aiosqlite:///./data.db` |
 
 ## API Endpoints
@@ -51,7 +51,7 @@ uvicorn app.main:app --reload
 ### Create Item
 
 ```bash
-curl -X POST http://localhost:8000/api/items \
+curl -X POST http://localhost:3000/api/items \
   -H "Content-Type: application/json" \
   -d '{"name": "Example Item", "description": "A sample item"}'
 ```
@@ -59,13 +59,13 @@ curl -X POST http://localhost:8000/api/items \
 ### List Items
 
 ```bash
-curl http://localhost:8000/api/items
+curl http://localhost:3000/api/items
 ```
 
 ## Interactive Docs
 
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- Swagger UI: http://localhost:3000/docs
+- ReDoc: http://localhost:3000/redoc
 
 ## Docker
 
@@ -75,7 +75,7 @@ docker-compose up --build
 
 # Or build manually
 docker build -t python-fastapi-rest-api .
-docker run -p 8000:8000 python-fastapi-rest-api
+docker run -p 3000:3000 python-fastapi-rest-api
 ```
 
 ## License

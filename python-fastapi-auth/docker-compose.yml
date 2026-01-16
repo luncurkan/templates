@@ -2,10 +2,10 @@ services:
   api:
     build: .
     ports:
-      - "8000:8000"
+      - "3000:3000"
     environment:
       - HOST=0.0.0.0
-      - PORT=8000
+      - PORT=3000
       - DATABASE_URL=sqlite+aiosqlite:///./data/data.db
       - JWT_SECRET=change-this-in-production
       - JWT_ALGORITHM=HS256

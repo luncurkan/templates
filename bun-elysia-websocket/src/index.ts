@@ -71,7 +71,8 @@ const chatHtml = `
     </div>
   </div>
   <script>
-    const ws = new WebSocket('ws://' + location.host + '/ws');
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(protocol + '//' + location.host + '/ws');
     const messages = document.getElementById('messages');
     const status = document.getElementById('status');
     let username = 'User' + Math.floor(Math.random() * 1000);
