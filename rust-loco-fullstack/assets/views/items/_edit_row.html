@@ -1,0 +1,28 @@
+<tr id="item-{{ item.id }}">
+    <td>
+        <input type="text" name="name" value="{{ item.name }}" required style="width: 100%;" class="edit-input-{{ item.id }}">
+    </td>
+    <td>
+        <input type="text" name="description" value="{{ item.description | default(value='') }}" style="width: 100%;" class="edit-input-{{ item.id }}">
+    </td>
+    <td>{{ item.created_at | date(format="%Y-%m-%d %H:%M") }}</td>
+    <td class="actions">
+        <button
+            type="button"
+            class="btn-primary"
+            hx-put="/{{ item.id }}"
+            hx-target="#item-{{ item.id }}"
+            hx-swap="outerHTML"
+            hx-include=".edit-input-{{ item.id }}">
+            Save
+        </button>
+        <button
+            type="button"
+            class="btn-secondary"
+            hx-get="/{{ item.id }}/row"
+            hx-target="#item-{{ item.id }}"
+            hx-swap="outerHTML">
+            Cancel
+        </button>
+    </td>
+</tr>
