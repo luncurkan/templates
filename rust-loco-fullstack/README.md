@@ -1,33 +1,37 @@
-# Rust Loco REST API
+# rust-loco-fullstack
 
-A simple REST API starter template built with Rust and the Loco framework (Rails-like for Rust).
+A fullstack web application template built with Rust, Loco framework, and HTMX for dynamic server-rendered UI.
 
 ## Stack
 
 - **Runtime**: Rust 1.85+
-- **Framework**: Loco 0.14
+- **Framework**: Loco 0.14 (Rails-like for Rust)
 - **ORM**: SeaORM
 - **Database**: PostgreSQL
-- **Language**: Rust (Edition 2021)
+- **Templating**: Tera
+- **Frontend**: HTMX 2.0 (dynamic HTML over the wire)
 
 ## Quick Start
 
 1. Copy `.env.example` to `.env`:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Start PostgreSQL (using Docker):
+
    ```bash
    docker run -d --name postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=app -p 5432:5432 postgres:16-alpine
    ```
 
 3. Run the application:
+
    ```bash
    cargo run -- start
    ```
 
-4. The API will be available at `http://localhost:3000`
+4. The app will be available at `http://localhost:3000`
 
 ## Loco CLI Commands
 
@@ -60,6 +64,15 @@ cargo run -- generate model <name>
 
 ```
 .
+├── assets/
+│   ├── static/             # Static files (CSS, JS, images)
+│   └── views/              # Tera HTML templates
+│       ├── layouts/
+│       │   └── base.html   # Base layout template
+│       └── items/
+│           ├── index.html  # Items list page
+│           ├── _row.html   # Item row partial
+│           └── _edit_row.html  # Edit row partial
 ├── config/
 │   ├── development.yaml    # Development config
 │   └── production.yaml     # Production config
@@ -68,18 +81,36 @@ cargo run -- generate model <name>
 ├── src/
 │   ├── app.rs              # Application hooks
 │   ├── controllers/        # Route handlers
-│   │   ├── health.rs
-│   │   └── items.rs
+│   │   ├── health.rs       # Health check endpoint
+│   │   ├── items.rs        # REST API endpoints
+│   │   └── items_ui.rs     # HTMX UI endpoints
+│   ├── initializers/
+│   │   └── view_engine.rs  # Tera view engine setup
 │   ├── models/             # Database models
 │   │   └── _entities/
 │   │       └── items.rs
+│   ├── views/              # View rendering helpers
+│   │   └── items.rs
 │   ├── lib.rs
 │   └── main.rs
 ├── Cargo.toml
 └── README.md
 ```
 
-## API Endpoints
+## Endpoints
+
+### Web UI (HTMX)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | Items list page (server-rendered) |
+| `POST` | `/` | Create item (returns HTML row) |
+| `GET` | `/:id/edit` | Get edit form row |
+| `GET` | `/:id/row` | Get item row (cancel edit) |
+| `PUT` | `/:id` | Update item (returns HTML row) |
+| `DELETE` | `/:id` | Delete item |
+
+### REST API (JSON)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -90,7 +121,7 @@ cargo run -- generate model <name>
 | `PUT` | `/api/items/:id` | Update item |
 | `DELETE` | `/api/items/:id` | Delete item |
 
-## Request/Response Examples
+## Request/Response Examples (REST API)
 
 ### Create Item
 
@@ -137,8 +168,8 @@ docker-compose up --build
 Or build manually:
 
 ```bash
-docker build -t rust-loco-rest-api .
-docker run -p 3000:3000 -e DATABASE_URL=postgres://user:pass@host:5432/db rust-loco-rest-api
+docker build -t rust-loco-fullstack .
+docker run -p 3000:3000 -e DATABASE_URL=postgres://user:pass@host:5432/db rust-loco-fullstack
 ```
 
 ## License
