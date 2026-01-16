@@ -1,0 +1,65 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Items - Manage Your Items{% endblock %}
+
+{% block content %}
+<h1>Items</h1>
+
+<div class="card">
+    <h2>Add New Item</h2>
+    <form hx-post="/" hx-target="#items-table-body" hx-swap="afterbegin" hx-on::after-request="if(event.detail.successful) this.reset()">
+        <div class="form-group">
+            <label for="name">Name *</label>
+            <input type="text" id="name" name="name" required placeholder="Enter item name">
+        </div>
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" placeholder="Enter item description (optional)"></textarea>
+        </div>
+        <button type="submit" class="btn-primary">
+            Add Item
+            <span class="htmx-indicator spinner"></span>
+        </button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>All Items</h2>
+    <div id="items-list">
+        {% if items | length == 0 %}
+        <p class="empty-state" id="empty-state">No items yet. Add your first item above!</p>
+        {% endif %}
+        <table {% if items | length == 0 %}style="display: none;"{% endif %} id="items-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="items-table-body">
+                {% for item in items %}
+                {% include "items/_row.html" %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        // Show table and hide empty state when first item is added
+        if (evt.detail.target.id === 'items-table-body') {
+            const emptyState = document.getElementById('empty-state');
+            const table = document.getElementById('items-table');
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+            if (table) {
+                table.style.display = '';
+            }
+        }
+    });
+</script>
+{% endblock %}

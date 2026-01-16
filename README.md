@@ -22,6 +22,8 @@ Templates follow the pattern: `{language}-{framework}-{usecase}`
 | [node-hono-rest-api](./node-hono-rest-api) | Node.js, Hono, TypeScript | SQLite | ✅ | Zod validation, CRUD operations |
 | [python-fastapi-rest-api](./python-fastapi-rest-api) | Python, FastAPI, SQLAlchemy | SQLite | ✅ | Pydantic models, async, CRUD operations |
 | [bun-elysia-rest-api](./bun-elysia-rest-api) | Bun, Elysia, TypeScript | SQLite | ✅ | Validation, CRUD operations |
+| [rust-rocket-rest-api](./rust-rocket-rest-api) | Rust, Rocket 0.5 | PostgreSQL | ✅ | Type-safe routing, CRUD operations |
+| [rust-actix-rest-api](./rust-actix-rest-api) | Rust, Actix-web 4 | PostgreSQL | ✅ | High performance, CRUD operations |
 
 ### Authentication Services
 
@@ -38,6 +40,12 @@ Templates follow the pattern: `{language}-{framework}-{usecase}`
 | [node-hono-websocket](./node-hono-websocket) | Node.js, Hono, TypeScript | None | ✅ | WebSocket upgrade, chat rooms |
 | [bun-elysia-websocket](./bun-elysia-websocket) | Bun, Elysia | None | ✅ | Native Bun WebSocket, rooms |
 | [go-fiber-websocket](./go-fiber-websocket) | Go, Fiber v2 | None | ✅ | WebSocket middleware, broadcast |
+
+### Fullstack
+
+| Template | Stack | Database | Docker | Features |
+|----------|-------|----------|--------|----------|
+| [rust-loco-fullstack](./rust-loco-fullstack) | Rust, Loco 0.14, SeaORM, Tera, HTMX | PostgreSQL | ✅ | Rails-like, HTMX dynamic UI, migrations, full MVC |
 
 ## Usage
 

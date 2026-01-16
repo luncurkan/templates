@@ -1,4 +1,4 @@
-# Go Fiber URL Shortener
+# go-fiber-url-shortener
 
 A simple URL shortener built with [Go Fiber](https://gofiber.io/) featuring an HTMX-powered web UI and in-memory storage.
 
@@ -43,6 +43,7 @@ The server will start on `http://localhost:3000`.
 ## Web Interface
 
 Visit `http://localhost:3000` in your browser to access the web UI where you can:
+
 - Shorten URLs with a simple form
 - View all shortened URLs
 - Copy short URLs to clipboard
@@ -57,6 +58,7 @@ GET /api/health
 ```
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -76,6 +78,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "short_url": "http://localhost:3000/abc123",
@@ -99,6 +102,7 @@ GET /:code/stats
 ```
 
 **Response:**
+
 ```json
 {
   "original_url": "https://example.com/very/long/url",
@@ -115,6 +119,7 @@ GET /api/urls
 ```
 
 **Response:**
+
 ```json
 {
   "urls": [
