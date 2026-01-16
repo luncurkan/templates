@@ -50,6 +50,10 @@ Deploy any template directly to luncurkan.dev or use as a starting point for you
 | `PORT` | Yes (Docker) | Default port is `3000`. All Dockerized templates expose this port. |
 | `DATABASE_URL` | Yes (PostgreSQL) | PostgreSQL connection string. Example: `postgres://user:password@host:5432/dbname` |
 
+## Notes
+
+- **Dockerfile**: If a template includes a Dockerfile, [luncurkan.dev](https://luncurkan.dev) will use it as a reference for deployment and will not auto-generate a Dockerfile.
+
 ## License
 
 MIT
