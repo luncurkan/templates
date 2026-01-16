@@ -46,7 +46,7 @@ Templates follow the pattern: `{language}-{framework}-{usecase}`
 
 | Template | Stack | Database | Docker | Features |
 |----------|-------|----------|--------|----------|
-| [rust-loco-fullstack](./rust-loco-fullstack) | Rust, Loco 0.14, SeaORM | PostgreSQL | ✅ | Rails-like, SSR, migrations, full MVC |
+| [rust-loco-fullstack](./rust-loco-fullstack) | Rust, Loco 0.14, SeaORM, Tera, HTMX | PostgreSQL | ✅ | Rails-like, HTMX dynamic UI, migrations, full MVC |
 
 ## Usage
 
