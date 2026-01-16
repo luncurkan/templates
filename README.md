@@ -24,7 +24,6 @@ Templates follow the pattern: `{language}-{framework}-{usecase}`
 | [bun-elysia-rest-api](./bun-elysia-rest-api) | Bun, Elysia, TypeScript | SQLite | ✅ | Validation, CRUD operations |
 | [rust-rocket-rest-api](./rust-rocket-rest-api) | Rust, Rocket 0.5 | PostgreSQL | ✅ | Type-safe routing, CRUD operations |
 | [rust-actix-rest-api](./rust-actix-rest-api) | Rust, Actix-web 4 | PostgreSQL | ✅ | High performance, CRUD operations |
-| [rust-loco-rest-api](./rust-loco-rest-api) | Rust, Loco 0.14, SeaORM | PostgreSQL | ✅ | Rails-like, migrations, CRUD operations |
 
 ### Authentication Services
 
