@@ -75,7 +75,8 @@ async fn get_items(pool: web::Data<PgPool>) -> impl Responder {
     .await
     {
         Ok(items) => HttpResponse::Ok().json(ApiResponse::success(items)),
-        Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<Vec<Item>>::error(&e.to_string())),
+        Err(e) => HttpResponse::InternalServerError()
+            .json(ApiResponse::<Vec<Item>>::error(&e.to_string())),
     }
 }
 
@@ -92,26 +93,27 @@ async fn get_item(path: web::Path<String>, pool: web::Data<PgPool>) -> impl Resp
     {
         Ok(Some(item)) => HttpResponse::Ok().json(ApiResponse::success(item)),
         Ok(None) => HttpResponse::NotFound().json(ApiResponse::<Item>::error("Item not found")),
-        Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<Item>::error(&e.to_string())),
+        Err(e) => {
+            HttpResponse::InternalServerError().json(ApiResponse::<Item>::error(&e.to_string()))
+        }
     }
 }
 
 // Create new item
 #[post("/api/items")]
-async fn create_item(
-    input: web::Json<CreateItem>,
-    pool: web::Data<PgPool>,
-) -> impl Responder {
+async fn create_item(input: web::Json<CreateItem>, pool: web::Data<PgPool>) -> impl Responder {
     let id = Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
 
-    match sqlx::query("INSERT INTO items (id, name, description, created_at) VALUES ($1, $2, $3, $4)")
-        .bind(&id)
-        .bind(&input.name)
-        .bind(&input.description)
-        .bind(&now)
-        .execute(pool.get_ref())
-        .await
+    match sqlx::query(
+        "INSERT INTO items (id, name, description, created_at) VALUES ($1, $2, $3, $4)",
+    )
+    .bind(&id)
+    .bind(&input.name)
+    .bind(&input.description)
+    .bind(&now)
+    .execute(pool.get_ref())
+    .await
     {
         Ok(_) => {
             let item = Item {
@@ -122,7 +124,9 @@ async fn create_item(
             };
             HttpResponse::Created().json(ApiResponse::success(item))
         }
-        Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<Item>::error(&e.to_string())),
+        Err(e) => {
+            HttpResponse::InternalServerError().json(ApiResponse::<Item>::error(&e.to_string()))
+        }
     }
 }
 
@@ -164,11 +168,14 @@ async fn update_item(
                     };
                     HttpResponse::Ok().json(ApiResponse::success(updated))
                 }
-                Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<Item>::error(&e.to_string())),
+                Err(e) => HttpResponse::InternalServerError()
+                    .json(ApiResponse::<Item>::error(&e.to_string())),
             }
         }
         Ok(None) => HttpResponse::NotFound().json(ApiResponse::<Item>::error("Item not found")),
-        Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<Item>::error(&e.to_string())),
+        Err(e) => {
+            HttpResponse::InternalServerError().json(ApiResponse::<Item>::error(&e.to_string()))
+        }
     }
 }
 
@@ -189,7 +196,9 @@ async fn delete_item(path: web::Path<String>, pool: web::Data<PgPool>) -> impl R
                 HttpResponse::NotFound().json(ApiResponse::<String>::error("Item not found"))
             }
         }
-        Err(e) => HttpResponse::InternalServerError().json(ApiResponse::<String>::error(&e.to_string())),
+        Err(e) => {
+            HttpResponse::InternalServerError().json(ApiResponse::<String>::error(&e.to_string()))
+        }
     }
 }
 

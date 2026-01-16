@@ -1,4 +1,4 @@
-# Axum Short URL
+# rust-axum-url-shortener
 
 A fast, lightweight URL shortener service built with Rust and Axum.
 
@@ -37,7 +37,7 @@ PORT=3000
 BASE_URL=http://localhost:3000
 ```
 
-2. Run the application:
+1. Run the application:
 
 ```bash
 cargo run

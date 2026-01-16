@@ -1,4 +1,4 @@
-# Rust Rocket REST API
+# rust-rocket-rest-api
 
 A simple REST API starter template built with Rust and the Rocket framework.
 
@@ -12,16 +12,19 @@ A simple REST API starter template built with Rust and the Rocket framework.
 ## Quick Start
 
 1. Copy `.env.example` to `.env`:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Start PostgreSQL (using Docker):
+
    ```bash
    docker run -d --name postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=app -p 5432:5432 postgres:16-alpine
    ```
 
 3. Run the application:
+
    ```bash
    cargo run
    ```

@@ -72,9 +72,11 @@ fn health() -> Json<HealthResponse> {
 // Get all items
 #[get("/api/items")]
 async fn get_items(pool: &State<PgPool>) -> Json<ApiResponse<Vec<Item>>> {
-    match sqlx::query_as::<_, Item>("SELECT id, name, description, created_at FROM items ORDER BY created_at DESC")
-        .fetch_all(pool.inner())
-        .await
+    match sqlx::query_as::<_, Item>(
+        "SELECT id, name, description, created_at FROM items ORDER BY created_at DESC",
+    )
+    .fetch_all(pool.inner())
+    .await
     {
         Ok(items) => Json(ApiResponse::success(items)),
         Err(e) => Json(ApiResponse::error(&e.to_string())),
@@ -84,10 +86,12 @@ async fn get_items(pool: &State<PgPool>) -> Json<ApiResponse<Vec<Item>>> {
 // Get single item by ID
 #[get("/api/items/<id>")]
 async fn get_item(id: &str, pool: &State<PgPool>) -> Json<ApiResponse<Item>> {
-    match sqlx::query_as::<_, Item>("SELECT id, name, description, created_at FROM items WHERE id = $1")
-        .bind(id)
-        .fetch_optional(pool.inner())
-        .await
+    match sqlx::query_as::<_, Item>(
+        "SELECT id, name, description, created_at FROM items WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(pool.inner())
+    .await
     {
         Ok(Some(item)) => Json(ApiResponse::success(item)),
         Ok(None) => Json(ApiResponse::error("Item not found")),
@@ -101,13 +105,15 @@ async fn create_item(input: Json<CreateItem>, pool: &State<PgPool>) -> Json<ApiR
     let id = Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
 
-    match sqlx::query("INSERT INTO items (id, name, description, created_at) VALUES ($1, $2, $3, $4)")
-        .bind(&id)
-        .bind(&input.name)
-        .bind(&input.description)
-        .bind(&now)
-        .execute(pool.inner())
-        .await
+    match sqlx::query(
+        "INSERT INTO items (id, name, description, created_at) VALUES ($1, $2, $3, $4)",
+    )
+    .bind(&id)
+    .bind(&input.name)
+    .bind(&input.description)
+    .bind(&now)
+    .execute(pool.inner())
+    .await
     {
         Ok(_) => {
             let item = Item {
@@ -124,12 +130,18 @@ async fn create_item(input: Json<CreateItem>, pool: &State<PgPool>) -> Json<ApiR
 
 // Update item
 #[put("/api/items/<id>", data = "<input>")]
-async fn update_item(id: &str, input: Json<UpdateItem>, pool: &State<PgPool>) -> Json<ApiResponse<Item>> {
+async fn update_item(
+    id: &str,
+    input: Json<UpdateItem>,
+    pool: &State<PgPool>,
+) -> Json<ApiResponse<Item>> {
     // First check if item exists
-    let existing = sqlx::query_as::<_, Item>("SELECT id, name, description, created_at FROM items WHERE id = $1")
-        .bind(id)
-        .fetch_optional(pool.inner())
-        .await;
+    let existing = sqlx::query_as::<_, Item>(
+        "SELECT id, name, description, created_at FROM items WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(pool.inner())
+    .await;
 
     match existing {
         Ok(Some(item)) => {
@@ -221,7 +233,15 @@ async fn rocket() -> Rocket<Build> {
         ..rocket::Config::default()
     };
 
-    rocket::custom(config)
-        .manage(pool)
-        .mount("/", routes![health, get_items, get_item, create_item, update_item, delete_item])
+    rocket::custom(config).manage(pool).mount(
+        "/",
+        routes![
+            health,
+            get_items,
+            get_item,
+            create_item,
+            update_item,
+            delete_item
+        ],
+    )
 }
