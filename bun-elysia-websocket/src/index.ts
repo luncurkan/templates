@@ -18,12 +18,29 @@ interface Message {
   timestamp?: string;
 }
 
+// Logging utility
+const log = {
+  info: (context: string, message: string, data?: any) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [INFO] [${context}] ${message}`, data ? JSON.stringify(data) : '');
+  },
+  error: (context: string, message: string, error?: any) => {
+    const timestamp = new Date().toISOString();
+    console.error(`[${timestamp}] [ERROR] [${context}] ${message}`, error || '');
+  },
+  debug: (context: string, message: string, data?: any) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [DEBUG] [${context}] ${message}`, data ? JSON.stringify(data) : '');
+  },
+};
+
 // State
 const rooms = new Map<string, Set<Client>>();
 
 function getRoom(roomName: string): Set<Client> {
   if (!rooms.has(roomName)) {
     rooms.set(roomName, new Set());
+    log.info('Room', `Created new room: ${roomName}`);
   }
   return rooms.get(roomName)!;
 }
@@ -31,11 +48,14 @@ function getRoom(roomName: string): Set<Client> {
 function broadcast(room: string, message: Message, exclude?: any) {
   const clients = getRoom(room);
   const data = JSON.stringify(message);
+  let sentCount = 0;
   for (const client of clients) {
     if (client.ws !== exclude && client.ws.readyState === 1) {
       client.ws.send(data);
+      sentCount++;
     }
   }
+  log.info('Broadcast', `Sent to ${sentCount}/${clients.size} clients in room "${room}"`, { type: message.type, username: message.username });
 }
 
 // HTML UI
@@ -181,6 +201,7 @@ const app = new Elysia()
       const client: Client = { ws: ws.raw, username: "Anonymous", room: "general" };
       ws.data = { ...ws.data, client };
       getRoom("general").add(client);
+      log.info('WS /ws', `Client connected`, { room: "general", totalClients: getRoom("general").size });
       broadcast("general", {
         type: "message",
         username: "System",
@@ -190,23 +211,34 @@ const app = new Elysia()
     },
     message(ws, data) {
       const client = (ws.data as any)?.client as Client;
-      if (!client) return;
+      log.debug('WS /ws', `Message received`, { type: data.type, hasClient: !!client, rawData: data });
+
+      if (!client) {
+        log.error('WS /ws', 'No client found in ws.data');
+        return;
+      }
 
       if (data.type === "username" && data.username) {
+        const oldUsername = client.username;
         client.username = data.username;
+        log.info('WS /ws', `Username set`, { from: oldUsername, to: data.username, room: client.room });
       } else if (data.type === "message" && data.content) {
+        log.info('WS /ws', `Chat message`, { username: client.username, content: data.content, room: client.room });
         broadcast(client.room, {
           type: "message",
           username: client.username,
           content: data.content,
           timestamp: new Date().toISOString(),
         });
+      } else {
+        log.debug('WS /ws', `Unhandled message type`, { type: data.type, data });
       }
     },
     close(ws) {
       const client = (ws.data as any)?.client as Client;
       if (client) {
         getRoom(client.room).delete(client);
+        log.info('WS /ws', `Client disconnected`, { username: client.username, room: client.room, remainingClients: getRoom(client.room).size });
         broadcast(client.room, {
           type: "message",
           username: "System",
@@ -228,6 +260,7 @@ const app = new Elysia()
       const client: Client = { ws: ws.raw, username: "Anonymous", room };
       ws.data = { ...ws.data, client };
       getRoom(room).add(client);
+      log.info('WS /ws/:room', `Client connected`, { room, totalClients: getRoom(room).size });
       broadcast(room, {
         type: "message",
         username: "System",
@@ -237,23 +270,34 @@ const app = new Elysia()
     },
     message(ws, data) {
       const client = (ws.data as any)?.client as Client;
-      if (!client) return;
+      log.debug('WS /ws/:room', `Message received`, { type: data.type, hasClient: !!client, rawData: data });
+
+      if (!client) {
+        log.error('WS /ws/:room', 'No client found in ws.data');
+        return;
+      }
 
       if (data.type === "username" && data.username) {
+        const oldUsername = client.username;
         client.username = data.username;
+        log.info('WS /ws/:room', `Username set`, { from: oldUsername, to: data.username, room: client.room });
       } else if (data.type === "message" && data.content) {
+        log.info('WS /ws/:room', `Chat message`, { username: client.username, content: data.content, room: client.room });
         broadcast(client.room, {
           type: "message",
           username: client.username,
           content: data.content,
           timestamp: new Date().toISOString(),
         });
+      } else {
+        log.debug('WS /ws/:room', `Unhandled message type`, { type: data.type, data });
       }
     },
     close(ws) {
       const client = (ws.data as any)?.client as Client;
       if (client) {
         getRoom(client.room).delete(client);
+        log.info('WS /ws/:room', `Client disconnected`, { username: client.username, room: client.room, remainingClients: getRoom(client.room).size });
         broadcast(client.room, {
           type: "message",
           username: "System",
@@ -266,4 +310,4 @@ const app = new Elysia()
 
   .listen({ hostname: HOST, port: PORT });
 
-console.log(`Server running on http://${HOST}:${PORT}`);
+log.info('Server', `Started on http://${HOST}:${PORT}`, { host: HOST, port: PORT });
