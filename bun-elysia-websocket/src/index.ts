@@ -36,6 +36,7 @@ const log = {
 
 // State
 const rooms = new Map<string, Set<Client>>();
+const clients = new Map<any, Client>(); // Map WebSocket to Client
 
 function getRoom(roomName: string): Set<Client> {
   if (!rooms.has(roomName)) {
@@ -199,7 +200,7 @@ const app = new Elysia()
     }),
     open(ws) {
       const client: Client = { ws: ws.raw, username: "Anonymous", room: "general" };
-      ws.data = { ...ws.data, client };
+      clients.set(ws.raw, client);
       getRoom("general").add(client);
       log.info('WS /ws', `Client connected`, { room: "general", totalClients: getRoom("general").size });
       broadcast("general", {
@@ -210,11 +211,11 @@ const app = new Elysia()
       });
     },
     message(ws, data) {
-      const client = (ws.data as any)?.client as Client;
+      const client = clients.get(ws.raw);
       log.debug('WS /ws', `Message received`, { type: data.type, hasClient: !!client, rawData: data });
 
       if (!client) {
-        log.error('WS /ws', 'No client found in ws.data');
+        log.error('WS /ws', 'No client found in clients map');
         return;
       }
 
@@ -235,9 +236,10 @@ const app = new Elysia()
       }
     },
     close(ws) {
-      const client = (ws.data as any)?.client as Client;
+      const client = clients.get(ws.raw);
       if (client) {
         getRoom(client.room).delete(client);
+        clients.delete(ws.raw);
         log.info('WS /ws', `Client disconnected`, { username: client.username, room: client.room, remainingClients: getRoom(client.room).size });
         broadcast(client.room, {
           type: "message",
@@ -258,7 +260,7 @@ const app = new Elysia()
     open(ws) {
       const room = (ws.data as any)?.params?.room || "general";
       const client: Client = { ws: ws.raw, username: "Anonymous", room };
-      ws.data = { ...ws.data, client };
+      clients.set(ws.raw, client);
       getRoom(room).add(client);
       log.info('WS /ws/:room', `Client connected`, { room, totalClients: getRoom(room).size });
       broadcast(room, {
@@ -269,11 +271,11 @@ const app = new Elysia()
       });
     },
     message(ws, data) {
-      const client = (ws.data as any)?.client as Client;
+      const client = clients.get(ws.raw);
       log.debug('WS /ws/:room', `Message received`, { type: data.type, hasClient: !!client, rawData: data });
 
       if (!client) {
-        log.error('WS /ws/:room', 'No client found in ws.data');
+        log.error('WS /ws/:room', 'No client found in clients map');
         return;
       }
 
@@ -294,9 +296,10 @@ const app = new Elysia()
       }
     },
     close(ws) {
-      const client = (ws.data as any)?.client as Client;
+      const client = clients.get(ws.raw);
       if (client) {
         getRoom(client.room).delete(client);
+        clients.delete(ws.raw);
         log.info('WS /ws/:room', `Client disconnected`, { username: client.username, room: client.room, remainingClients: getRoom(client.room).size });
         broadcast(client.room, {
           type: "message",
