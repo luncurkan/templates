@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 
 // Environment
 const HOST = process.env.HOST || "0.0.0.0";
@@ -18,12 +18,29 @@ interface Message {
   timestamp?: string;
 }
 
+// Logging utility
+const log = {
+  info: (context: string, message: string, data?: any) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [INFO] [${context}] ${message}`, data ? JSON.stringify(data) : '');
+  },
+  error: (context: string, message: string, error?: any) => {
+    const timestamp = new Date().toISOString();
+    console.error(`[${timestamp}] [ERROR] [${context}] ${message}`, error || '');
+  },
+  debug: (context: string, message: string, data?: any) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [DEBUG] [${context}] ${message}`, data ? JSON.stringify(data) : '');
+  },
+};
+
 // State
 const rooms = new Map<string, Set<Client>>();
 
 function getRoom(roomName: string): Set<Client> {
   if (!rooms.has(roomName)) {
     rooms.set(roomName, new Set());
+    log.info('Room', `Created new room: ${roomName}`);
   }
   return rooms.get(roomName)!;
 }
@@ -31,11 +48,14 @@ function getRoom(roomName: string): Set<Client> {
 function broadcast(room: string, message: Message, exclude?: any) {
   const clients = getRoom(room);
   const data = JSON.stringify(message);
+  let sentCount = 0;
   for (const client of clients) {
     if (client.ws !== exclude && client.ws.readyState === 1) {
       client.ws.send(data);
+      sentCount++;
     }
   }
+  log.info('Broadcast', `Sent to ${sentCount}/${clients.size} clients in room "${room}"`, { type: message.type, username: message.username });
 }
 
 // HTML UI
@@ -66,45 +86,96 @@ const chatHtml = `
     <div class="status" id="status">Connecting...</div>
     <div class="messages" id="messages"></div>
     <div class="input-area">
-      <input type="text" id="message" placeholder="Type a message..." onkeypress="if(event.key==='Enter')sendMessage()">
+      <input type="text" id="message" placeholder="Type a message..." onkeypress="if(event.key==='Enter' && isConnected) sendMessage()">
       <button onclick="sendMessage()">Send</button>
     </div>
   </div>
   <script>
-    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(protocol + '//' + location.host + '/ws');
+    // Detect protocol and construct WebSocket URL with proper error handling
+    const getWebSocketUrl = () => {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        return \`\${protocol}//\${host}/ws\`;
+    };
+
+    const ws = new WebSocket(getWebSocketUrl());
     const messages = document.getElementById('messages');
     const status = document.getElementById('status');
-    let username = 'User' + Math.floor(Math.random() * 1000);
+    let username = 'User' + Math.floor(Math.random() * 10000);
 
+    // Add connection state tracking
+    let isConnected = false;
+
+    // Handle WebSocket open
     ws.onopen = () => {
-      status.textContent = 'Connected as ' + username;
-      status.style.color = '#4caf50';
-      ws.send(JSON.stringify({ type: 'username', username }));
+        isConnected = true;
+        status.textContent = 'Connected as ' + username;
+        status.style.color = '#4caf50';
+        console.log('WebSocket connected to:', getWebSocketUrl());
+
+        // Send username immediately
+        ws.send(JSON.stringify({
+            type: 'username',
+            username: username
+        }));
     };
 
+    // Handle WebSocket close
     ws.onclose = () => {
-      status.textContent = 'Disconnected';
-      status.style.color = '#f44336';
+        isConnected = false;
+        status.textContent = 'Disconnected - Attempting to reconnect...';
+        status.style.color = '#f44336';
+        console.log('WebSocket disconnected');
+
+        // Attempt to reconnect after 3 seconds
+        setTimeout(() => {
+            location.reload();
+        }, 3000);
     };
 
+    // Handle WebSocket errors
+    ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        status.textContent = 'Connection error - Please refresh the page';
+        status.style.color = '#ff9800';
+    };
+
+    // Handle incoming messages
     ws.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      if (data.type === 'message') {
-        const div = document.createElement('div');
-        div.className = 'message';
-        div.innerHTML = '<span class="user">' + data.username + '</span> <span class="time">' + new Date(data.timestamp).toLocaleTimeString() + '</span><div>' + data.content + '</div>';
-        messages.appendChild(div);
-        messages.scrollTop = messages.scrollHeight;
-      }
+        try {
+            const data = JSON.parse(e.data);
+            if (data.type === 'message') {
+                const div = document.createElement('div');
+                div.className = 'message';
+                const timeStr = new Date(data.timestamp).toLocaleTimeString();
+                div.innerHTML = \`<span class="user">\${data.username}</span> <span class="time">\${timeStr}</span><div>\${data.content}</div>\`;
+                messages.appendChild(div);
+                messages.scrollTop = messages.scrollHeight;
+            }
+        } catch (err) {
+            console.error('Error parsing message:', err);
+        }
     };
 
+    // Send message function with connection check
     function sendMessage() {
-      const input = document.getElementById('message');
-      if (input.value.trim()) {
-        ws.send(JSON.stringify({ type: 'message', content: input.value }));
-        input.value = '';
-      }
+        const input = document.getElementById('message');
+        if (!input.value.trim()) return;
+
+        if (!isConnected || ws.readyState !== WebSocket.OPEN) {
+            alert('WebSocket not connected. Please refresh the page.');
+            return;
+        }
+
+        try {
+            ws.send(JSON.stringify({
+                type: 'message',
+                content: input.value
+            }));
+            input.value = '';
+        } catch (err) {
+            console.error('Error sending message:', err);
+        }
     }
   </script>
 </body>
@@ -121,10 +192,16 @@ const app = new Elysia()
 
   // WebSocket handlers
   .ws("/ws", {
+    body: t.Object({
+      type: t.String(),
+      username: t.Optional(t.String()),
+      content: t.Optional(t.String()),
+    }),
     open(ws) {
       const client: Client = { ws: ws.raw, username: "Anonymous", room: "general" };
-      (ws as any).data = { client };
+      ws.data = { ...ws.data, client };
       getRoom("general").add(client);
+      log.info('WS /ws', `Client connected`, { room: "general", totalClients: getRoom("general").size });
       broadcast("general", {
         type: "message",
         username: "System",
@@ -132,31 +209,36 @@ const app = new Elysia()
         timestamp: new Date().toISOString(),
       });
     },
-    message(ws, message) {
-      const client = (ws as any).data?.client as Client;
-      if (!client) return;
+    message(ws, data) {
+      const client = (ws.data as any)?.client as Client;
+      log.debug('WS /ws', `Message received`, { type: data.type, hasClient: !!client, rawData: data });
 
-      try {
-        const data = typeof message === "string" ? JSON.parse(message) : message as Message;
+      if (!client) {
+        log.error('WS /ws', 'No client found in ws.data');
+        return;
+      }
 
-        if (data.type === "username" && data.username) {
-          client.username = data.username;
-        } else if (data.type === "message" && data.content) {
-          broadcast(client.room, {
-            type: "message",
-            username: client.username,
-            content: data.content,
-            timestamp: new Date().toISOString(),
-          });
-        }
-      } catch {
-        // Ignore invalid messages
+      if (data.type === "username" && data.username) {
+        const oldUsername = client.username;
+        client.username = data.username;
+        log.info('WS /ws', `Username set`, { from: oldUsername, to: data.username, room: client.room });
+      } else if (data.type === "message" && data.content) {
+        log.info('WS /ws', `Chat message`, { username: client.username, content: data.content, room: client.room });
+        broadcast(client.room, {
+          type: "message",
+          username: client.username,
+          content: data.content,
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        log.debug('WS /ws', `Unhandled message type`, { type: data.type, data });
       }
     },
     close(ws) {
-      const client = (ws as any).data?.client as Client;
+      const client = (ws.data as any)?.client as Client;
       if (client) {
         getRoom(client.room).delete(client);
+        log.info('WS /ws', `Client disconnected`, { username: client.username, room: client.room, remainingClients: getRoom(client.room).size });
         broadcast(client.room, {
           type: "message",
           username: "System",
@@ -168,11 +250,17 @@ const app = new Elysia()
   })
 
   .ws("/ws/:room", {
+    body: t.Object({
+      type: t.String(),
+      username: t.Optional(t.String()),
+      content: t.Optional(t.String()),
+    }),
     open(ws) {
-      const room = (ws as any).data?.params?.room || "general";
+      const room = (ws.data as any)?.params?.room || "general";
       const client: Client = { ws: ws.raw, username: "Anonymous", room };
-      (ws as any).data = { ...(ws as any).data, client };
+      ws.data = { ...ws.data, client };
       getRoom(room).add(client);
+      log.info('WS /ws/:room', `Client connected`, { room, totalClients: getRoom(room).size });
       broadcast(room, {
         type: "message",
         username: "System",
@@ -180,31 +268,36 @@ const app = new Elysia()
         timestamp: new Date().toISOString(),
       });
     },
-    message(ws, message) {
-      const client = (ws as any).data?.client as Client;
-      if (!client) return;
+    message(ws, data) {
+      const client = (ws.data as any)?.client as Client;
+      log.debug('WS /ws/:room', `Message received`, { type: data.type, hasClient: !!client, rawData: data });
 
-      try {
-        const data = typeof message === "string" ? JSON.parse(message) : message as Message;
+      if (!client) {
+        log.error('WS /ws/:room', 'No client found in ws.data');
+        return;
+      }
 
-        if (data.type === "username" && data.username) {
-          client.username = data.username;
-        } else if (data.type === "message" && data.content) {
-          broadcast(client.room, {
-            type: "message",
-            username: client.username,
-            content: data.content,
-            timestamp: new Date().toISOString(),
-          });
-        }
-      } catch {
-        // Ignore invalid messages
+      if (data.type === "username" && data.username) {
+        const oldUsername = client.username;
+        client.username = data.username;
+        log.info('WS /ws/:room', `Username set`, { from: oldUsername, to: data.username, room: client.room });
+      } else if (data.type === "message" && data.content) {
+        log.info('WS /ws/:room', `Chat message`, { username: client.username, content: data.content, room: client.room });
+        broadcast(client.room, {
+          type: "message",
+          username: client.username,
+          content: data.content,
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        log.debug('WS /ws/:room', `Unhandled message type`, { type: data.type, data });
       }
     },
     close(ws) {
-      const client = (ws as any).data?.client as Client;
+      const client = (ws.data as any)?.client as Client;
       if (client) {
         getRoom(client.room).delete(client);
+        log.info('WS /ws/:room', `Client disconnected`, { username: client.username, room: client.room, remainingClients: getRoom(client.room).size });
         broadcast(client.room, {
           type: "message",
           username: "System",
@@ -217,4 +310,4 @@ const app = new Elysia()
 
   .listen({ hostname: HOST, port: PORT });
 
-console.log(`Server running on http://${HOST}:${PORT}`);
+log.info('Server', `Started on http://${HOST}:${PORT}`, { host: HOST, port: PORT });
