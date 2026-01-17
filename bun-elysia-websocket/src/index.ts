@@ -1,4 +1,4 @@
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 
 // Environment
 const HOST = process.env.HOST || "0.0.0.0";
@@ -172,9 +172,14 @@ const app = new Elysia()
 
   // WebSocket handlers
   .ws("/ws", {
+    body: t.Object({
+      type: t.String(),
+      username: t.Optional(t.String()),
+      content: t.Optional(t.String()),
+    }),
     open(ws) {
       const client: Client = { ws: ws.raw, username: "Anonymous", room: "general" };
-      (ws as any).data = { client };
+      ws.data = { ...ws.data, client };
       getRoom("general").add(client);
       broadcast("general", {
         type: "message",
@@ -183,37 +188,23 @@ const app = new Elysia()
         timestamp: new Date().toISOString(),
       });
     },
-    message(ws, message) {
-      const client = (ws as any).data?.client as Client;
+    message(ws, data) {
+      const client = (ws.data as any)?.client as Client;
       if (!client) return;
 
-      try {
-        // Handle different message formats (string, Buffer, object)
-        let data: Message;
-        if (typeof message === "string") {
-          data = JSON.parse(message);
-        } else if (message instanceof Buffer || message instanceof Uint8Array) {
-          data = JSON.parse(message.toString());
-        } else {
-          data = message as Message;
-        }
-
-        if (data.type === "username" && data.username) {
-          client.username = data.username;
-        } else if (data.type === "message" && data.content) {
-          broadcast(client.room, {
-            type: "message",
-            username: client.username,
-            content: data.content,
-            timestamp: new Date().toISOString(),
-          });
-        }
-      } catch {
-        // Ignore invalid messages
+      if (data.type === "username" && data.username) {
+        client.username = data.username;
+      } else if (data.type === "message" && data.content) {
+        broadcast(client.room, {
+          type: "message",
+          username: client.username,
+          content: data.content,
+          timestamp: new Date().toISOString(),
+        });
       }
     },
     close(ws) {
-      const client = (ws as any).data?.client as Client;
+      const client = (ws.data as any)?.client as Client;
       if (client) {
         getRoom(client.room).delete(client);
         broadcast(client.room, {
@@ -227,10 +218,15 @@ const app = new Elysia()
   })
 
   .ws("/ws/:room", {
+    body: t.Object({
+      type: t.String(),
+      username: t.Optional(t.String()),
+      content: t.Optional(t.String()),
+    }),
     open(ws) {
-      const room = (ws as any).data?.params?.room || "general";
+      const room = (ws.data as any)?.params?.room || "general";
       const client: Client = { ws: ws.raw, username: "Anonymous", room };
-      (ws as any).data = { ...(ws as any).data, client };
+      ws.data = { ...ws.data, client };
       getRoom(room).add(client);
       broadcast(room, {
         type: "message",
@@ -239,37 +235,23 @@ const app = new Elysia()
         timestamp: new Date().toISOString(),
       });
     },
-    message(ws, message) {
-      const client = (ws as any).data?.client as Client;
+    message(ws, data) {
+      const client = (ws.data as any)?.client as Client;
       if (!client) return;
 
-      try {
-        // Handle different message formats (string, Buffer, object)
-        let data: Message;
-        if (typeof message === "string") {
-          data = JSON.parse(message);
-        } else if (message instanceof Buffer || message instanceof Uint8Array) {
-          data = JSON.parse(message.toString());
-        } else {
-          data = message as Message;
-        }
-
-        if (data.type === "username" && data.username) {
-          client.username = data.username;
-        } else if (data.type === "message" && data.content) {
-          broadcast(client.room, {
-            type: "message",
-            username: client.username,
-            content: data.content,
-            timestamp: new Date().toISOString(),
-          });
-        }
-      } catch {
-        // Ignore invalid messages
+      if (data.type === "username" && data.username) {
+        client.username = data.username;
+      } else if (data.type === "message" && data.content) {
+        broadcast(client.room, {
+          type: "message",
+          username: client.username,
+          content: data.content,
+          timestamp: new Date().toISOString(),
+        });
       }
     },
     close(ws) {
-      const client = (ws as any).data?.client as Client;
+      const client = (ws.data as any)?.client as Client;
       if (client) {
         getRoom(client.room).delete(client);
         broadcast(client.room, {
