@@ -188,7 +188,15 @@ const app = new Elysia()
       if (!client) return;
 
       try {
-        const data = typeof message === "string" ? JSON.parse(message) : message as Message;
+        // Handle different message formats (string, Buffer, object)
+        let data: Message;
+        if (typeof message === "string") {
+          data = JSON.parse(message);
+        } else if (message instanceof Buffer || message instanceof Uint8Array) {
+          data = JSON.parse(message.toString());
+        } else {
+          data = message as Message;
+        }
 
         if (data.type === "username" && data.username) {
           client.username = data.username;
@@ -236,7 +244,15 @@ const app = new Elysia()
       if (!client) return;
 
       try {
-        const data = typeof message === "string" ? JSON.parse(message) : message as Message;
+        // Handle different message formats (string, Buffer, object)
+        let data: Message;
+        if (typeof message === "string") {
+          data = JSON.parse(message);
+        } else if (message instanceof Buffer || message instanceof Uint8Array) {
+          data = JSON.parse(message.toString());
+        } else {
+          data = message as Message;
+        }
 
         if (data.type === "username" && data.username) {
           client.username = data.username;
