@@ -66,45 +66,96 @@ const chatHtml = `
     <div class="status" id="status">Connecting...</div>
     <div class="messages" id="messages"></div>
     <div class="input-area">
-      <input type="text" id="message" placeholder="Type a message..." onkeypress="if(event.key==='Enter')sendMessage()">
+      <input type="text" id="message" placeholder="Type a message..." onkeypress="if(event.key==='Enter' && isConnected) sendMessage()">
       <button onclick="sendMessage()">Send</button>
     </div>
   </div>
   <script>
-    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(protocol + '//' + location.host + '/ws');
+    // Detect protocol and construct WebSocket URL with proper error handling
+    const getWebSocketUrl = () => {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        return \`\${protocol}//\${host}/ws\`;
+    };
+
+    const ws = new WebSocket(getWebSocketUrl());
     const messages = document.getElementById('messages');
     const status = document.getElementById('status');
-    let username = 'User' + Math.floor(Math.random() * 1000);
+    let username = 'User' + Math.floor(Math.random() * 10000);
 
+    // Add connection state tracking
+    let isConnected = false;
+
+    // Handle WebSocket open
     ws.onopen = () => {
-      status.textContent = 'Connected as ' + username;
-      status.style.color = '#4caf50';
-      ws.send(JSON.stringify({ type: 'username', username }));
+        isConnected = true;
+        status.textContent = 'Connected as ' + username;
+        status.style.color = '#4caf50';
+        console.log('WebSocket connected to:', getWebSocketUrl());
+
+        // Send username immediately
+        ws.send(JSON.stringify({
+            type: 'username',
+            username: username
+        }));
     };
 
+    // Handle WebSocket close
     ws.onclose = () => {
-      status.textContent = 'Disconnected';
-      status.style.color = '#f44336';
+        isConnected = false;
+        status.textContent = 'Disconnected - Attempting to reconnect...';
+        status.style.color = '#f44336';
+        console.log('WebSocket disconnected');
+
+        // Attempt to reconnect after 3 seconds
+        setTimeout(() => {
+            location.reload();
+        }, 3000);
     };
 
+    // Handle WebSocket errors
+    ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        status.textContent = 'Connection error - Please refresh the page';
+        status.style.color = '#ff9800';
+    };
+
+    // Handle incoming messages
     ws.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      if (data.type === 'message') {
-        const div = document.createElement('div');
-        div.className = 'message';
-        div.innerHTML = '<span class="user">' + data.username + '</span> <span class="time">' + new Date(data.timestamp).toLocaleTimeString() + '</span><div>' + data.content + '</div>';
-        messages.appendChild(div);
-        messages.scrollTop = messages.scrollHeight;
-      }
+        try {
+            const data = JSON.parse(e.data);
+            if (data.type === 'message') {
+                const div = document.createElement('div');
+                div.className = 'message';
+                const timeStr = new Date(data.timestamp).toLocaleTimeString();
+                div.innerHTML = \`<span class="user">\${data.username}</span> <span class="time">\${timeStr}</span><div>\${data.content}</div>\`;
+                messages.appendChild(div);
+                messages.scrollTop = messages.scrollHeight;
+            }
+        } catch (err) {
+            console.error('Error parsing message:', err);
+        }
     };
 
+    // Send message function with connection check
     function sendMessage() {
-      const input = document.getElementById('message');
-      if (input.value.trim()) {
-        ws.send(JSON.stringify({ type: 'message', content: input.value }));
-        input.value = '';
-      }
+        const input = document.getElementById('message');
+        if (!input.value.trim()) return;
+
+        if (!isConnected || ws.readyState !== WebSocket.OPEN) {
+            alert('WebSocket not connected. Please refresh the page.');
+            return;
+        }
+
+        try {
+            ws.send(JSON.stringify({
+                type: 'message',
+                content: input.value
+            }));
+            input.value = '';
+        } catch (err) {
+            console.error('Error sending message:', err);
+        }
     }
   </script>
 </body>
