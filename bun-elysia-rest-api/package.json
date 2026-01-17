@@ -6,11 +6,9 @@
     "start": "bun run src/index.ts"
   },
   "dependencies": {
-    "elysia": "^1.2.10",
-    "better-sqlite3": "^11.6.0"
+    "elysia": "^1.2.10"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.12",
     "bun-types": "latest"
   }
 }

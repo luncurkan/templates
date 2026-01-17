@@ -1,5 +1,5 @@
 import { Elysia, t } from "elysia";
-import Database from "better-sqlite3";
+import { Database } from "bun:sqlite";
 
 // Environment
 const HOST = process.env.HOST || "0.0.0.0";
