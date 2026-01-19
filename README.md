@@ -1,6 +1,6 @@
 # luncurkan.dev templates
 
-Ready-to-deploy project templates for [luncurkan.dev](https://luncurkan.dev) deployment platform.
+Ready-to-deploy project examples for [luncurkan.dev](https://luncurkan.dev) deployment platform.
 
 ## Naming Convention
 
