@@ -1,0 +1,22 @@
+{
+  "builder": {
+    "lang": "node",
+    "version": "20",
+    "command": "npm start",
+    "env": {
+      "PORT": "3000",
+      "HOST": "0.0.0.0"
+    }
+  },
+  "vars": {
+    "NODE_ENV": "production",
+    "DATABASE_PATH": "./data.db",
+    "JWT_SECRET": "your-secret-key-change-in-production",
+    "JWT_EXPIRES_IN": "15m",
+    "REFRESH_TOKEN_EXPIRES_IN": "7d"
+  },
+  "resources": {
+    "cpu": 100,
+    "memory": 50
+  }
+}

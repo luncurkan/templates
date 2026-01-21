@@ -1,0 +1,23 @@
+{
+  "builder": {
+    "lang": "rust",
+    "version": "1.75",
+    "command": "./target/release/rust-rocket-rest-api",
+    "env": {
+      "PORT": "3000",
+      "HOST": "0.0.0.0",
+      "ROCKET_ADDRESS": "0.0.0.0",
+      "ROCKET_PORT": "3000"
+    }
+  },
+  "vars": {
+    "RUST_LOG": "info"
+  },
+  "database": {
+    "managed": true
+  },
+  "resources": {
+    "cpu": 100,
+    "memory": 50
+  }
+}

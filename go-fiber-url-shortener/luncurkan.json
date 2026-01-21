@@ -1,0 +1,18 @@
+{
+  "builder": {
+    "lang": "go",
+    "version": "1.21",
+    "command": "./go-fiber-url-shortener",
+    "env": {
+      "PORT": "3000",
+      "HOST": "0.0.0.0"
+    }
+  },
+  "vars": {
+    "GO_ENV": "production"
+  },
+  "resources": {
+    "cpu": 100,
+    "memory": 50
+  }
+}
