@@ -1,7 +1,7 @@
 {
   "builder": {
     "lang": "rust",
-    "version": "1.75",
+    "version": "latest",
     "command": "./target/release/rust-axum-url-shortener",
     "env": {
       "PORT": "3000",
