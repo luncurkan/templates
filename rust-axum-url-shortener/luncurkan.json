@@ -1,0 +1,23 @@
+{
+  "builder": {
+    "lang": "rust",
+    "version": "1.75",
+    "command": "./target/release/rust-axum-url-shortener",
+    "env": {
+      "PORT": "3000",
+      "HOST": "0.0.0.0"
+    }
+  },
+  "vars": {
+    "RUST_LOG": "info",
+    "DATABASE_MAX_CONNECTIONS": "5",
+    "BASE_URL": "http://localhost:3000"
+  },
+  "database": {
+    "managed": true
+  },
+  "resources": {
+    "cpu": 100,
+    "memory": 50
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "builder": {
+    "lang": "node",
+    "version": "20",
+    "command": "npm start",
+    "env": {
+      "PORT": "3000",
+      "HOST": "0.0.0.0"
+    }
+  },
+  "vars": {
+    "NODE_ENV": "production"
+  },
+  "resources": {
+    "cpu": 100,
+    "memory": 50
+  }
+}

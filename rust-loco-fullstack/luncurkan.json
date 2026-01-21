@@ -1,0 +1,22 @@
+{
+  "builder": {
+    "lang": "rust",
+    "version": "1.75",
+    "command": "./target/release/rust-loco-fullstack",
+    "env": {
+      "PORT": "3000",
+      "HOST": "0.0.0.0"
+    }
+  },
+  "vars": {
+    "RUST_LOG": "info",
+    "LOCO_ENV": "production"
+  },
+  "database": {
+    "managed": true
+  },
+  "resources": {
+    "cpu": 100,
+    "memory": 50
+  }
+}

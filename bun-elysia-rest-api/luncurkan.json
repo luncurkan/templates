@@ -1,0 +1,19 @@
+{
+  "builder": {
+    "lang": "bun",
+    "version": "latest",
+    "command": "bun run src/index.ts",
+    "env": {
+      "PORT": "3000",
+      "HOST": "0.0.0.0"
+    }
+  },
+  "vars": {
+    "NODE_ENV": "production",
+    "DATABASE_PATH": "./data.db"
+  },
+  "resources": {
+    "cpu": 100,
+    "memory": 50
+  }
+}
