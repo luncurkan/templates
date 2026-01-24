@@ -2,13 +2,11 @@
   "builder": {
     "lang": "rust",
     "version": "1.75",
-    "command": "./target/release/rust-actix-rest-api",
-    "env": {
-      "PORT": "3000",
-      "HOST": "0.0.0.0"
-    }
+    "command": "./target/release/rust-actix-rest-api"
   },
-  "vars": {
+  "env": {
+    "PORT": "3000",
+    "HOST": "0.0.0.0",
     "RUST_LOG": "info"
   },
   "database": {
@@ -16,6 +14,6 @@
   },
   "resources": {
     "cpu": 100,
-    "memory": 50
+    "memory": 100
   }
 }

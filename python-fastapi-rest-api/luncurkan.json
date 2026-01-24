@@ -2,18 +2,16 @@
   "builder": {
     "lang": "python",
     "version": "3.12",
-    "command": "uvicorn app.main:app --host 0.0.0.0 --port 3000",
-    "env": {
-      "PORT": "3000",
-      "HOST": "0.0.0.0"
-    }
+    "command": "uvicorn app.main:app --host 0.0.0.0 --port 3000"
   },
-  "vars": {
+  "env": {
+    "PORT": "3000",
+    "HOST": "0.0.0.0",
     "PYTHON_ENV": "production",
     "DATABASE_URL": "sqlite+aiosqlite:///./data.db"
   },
   "resources": {
     "cpu": 100,
-    "memory": 50
+    "memory": 100
   }
 }

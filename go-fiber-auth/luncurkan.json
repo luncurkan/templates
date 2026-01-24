@@ -2,13 +2,11 @@
   "builder": {
     "lang": "go",
     "version": "1.21",
-    "command": "./go-fiber-auth",
-    "env": {
-      "PORT": "3000",
-      "HOST": "0.0.0.0"
-    }
+    "command": "./go-fiber-auth"
   },
-  "vars": {
+  "env": {
+    "PORT": "3000",
+    "HOST": "0.0.0.0",
     "GO_ENV": "production",
     "DATABASE_PATH": "./data.db",
     "JWT_SECRET": "your-secret-key-change-in-production",
@@ -17,6 +15,6 @@
   },
   "resources": {
     "cpu": 100,
-    "memory": 50
+    "memory": 100
   }
 }
